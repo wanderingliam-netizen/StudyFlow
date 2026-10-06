@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StudyFlow — Smart Student Planner</title>
+<style>
+:root{
+  --navy:#214f7d; --blue:#315b9b; --ink:#183247; --muted:#6f7880;
+  --bg:#f4f7fa; --card:#fff; --line:#d9e0e6; --green:#dcefdc;
+  --purple:#eadff7; --orange:#fbe2d0; --yellow:#fff0c7; --shadow:0 8px 24px rgba(24,50,71,.08);
+}
+*{box-sizing:border-box} body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--ink)}
+button,input,select{font:inherit} button{cursor:pointer;border:0}
+.topbar{background:var(--navy);color:white;padding:18px 28px;display:flex;align-items:center;justify-content:space-between}
+.brand{font-size:23px;font-weight:800}.brand span{font-weight:400;opacity:.75}.status{font-size:13px;opacity:.9}
+.hero{padding:28px 5vw 20px;background:white;border-bottom:1px solid var(--line)}
+.hero h1{margin:0 0 6px;font-size:31px}.hero p{margin:0;color:var(--muted)}
+.tabs{display:flex;gap:8px;padding:15px 5vw;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+.tab{background:#eef3f8;color:var(--navy);padding:10px 16px;border-radius:9px;font-weight:700}.tab.active{background:var(--blue);color:#fff}
+main{max-width:1400px;margin:auto;padding:24px 5vw 60px}.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:20px;margin-bottom:20px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+h2{margin:0 0 14px;font-size:21px} h3{margin:0 0 8px}.muted{color:var(--muted)}
+.formgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.field label{display:block;font-size:12px;font-weight:800;color:#58656f;margin-bottom:5px}.field input,.field select{width:100%;padding:10px;border:1px solid #cbd4dc;border-radius:8px;background:white}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.primary{background:var(--blue);color:#fff;padding:11px 16px;border-radius:8px;font-weight:800}.secondary{background:#e9eef3;color:var(--ink);padding:11px 16px;border-radius:8px;font-weight:700}.danger{background:#f9e2e2;color:#9a3030;padding:8px 11px;border-radius:7px}
+.classlist{display:grid;gap:8px;margin-top:15px}.classrow{display:grid;grid-template-columns:1.2fr 1fr .7fr .7fr auto;gap:10px;align-items:center;padding:11px;border:1px solid var(--line);border-radius:9px}
+.badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#e7eff8;color:var(--navy);font-size:12px;font-weight:800}
+.stat{padding:16px;border-radius:12px;background:#f5f8fb;border:1px solid var(--line)}.stat strong{font-size:27px;display:block}.stat small{color:var(--muted)}
+.schedule{overflow:auto}.week{min-width:950px;display:grid;grid-template-columns:105px repeat(5,1fr);border:1px solid var(--line)}
+.cell{min-height:74px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:8px;font-size:12px}.head{background:var(--blue);color:white;font-weight:800;text-align:center;min-height:42px}.time{background:#f8fafc;font-weight:700;color:#5d6870}.block{border-radius:7px;padding:8px;height:100%;font-weight:700}.classblock{background:#dce9f7;color:#24557f}.studyblock{background:var(--purple);color:#654292}.lifeblock{background:var(--green);color:#396238}.workblock{background:var(--orange);color:#a34d12}.breakblock{background:#f0f0f0;color:#777}
+.empty{color:#a1a9af;font-style:italic}.checklist{display:grid;gap:9px}.check{display:flex;gap:10px;align-items:center;padding:10px;border:1px solid var(--line);border-radius:9px}.check input{width:18px;height:18px}
+.goal{display:flex;justify-content:space-between;gap:20px;align-items:center;padding:13px 0;border-bottom:1px solid var(--line)}.goal:last-child{border:0}.progress{height:8px;background:#e5eaee;border-radius:99px;overflow:hidden;margin-top:7px}.progress i{display:block;height:100%;background:var(--blue)}
+.notice{padding:13px;border-left:4px solid var(--blue);background:#eef5fb;border-radius:7px;margin-bottom:15px}
+.hidden{display:none!important}
+@media(max-width:900px){.grid,.grid3{grid-template-columns:1fr}.formgrid{grid-template-columns:repeat(2,1fr)}.classrow{grid-template-columns:1fr 1fr}.tabs{overflow:auto}.hero h1{font-size:25px}}
+@media(max-width:560px){.formgrid{grid-template-columns:1fr}.topbar{padding:14px}.status{display:none}main{padding:18px 3vw}}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">StudyFlow <span>Student OS</span></div>
+  <div class="status" id="saveStatus">Saved locally</div>
+</header>
+<section class="hero">
+  <h1>Your semester, balanced.</h1>
+  <p>Enter your fixed commitments once. StudyFlow protects classes, builds spaced study blocks, and reserves time for life and work.</p>
+</section>
+<nav class="tabs">
+  <button class="tab active" data-tab="dashboard">Dashboard</button>
+  <button class="tab" data-tab="classes">Classes</button>
+  <button class="tab" data-tab="balance">Life & Work</button>
+  <button class="tab" data-tab="settings">Preferences</button>
+</nav>
+
+<main>
+<section id="dashboard" class="page">
+  <div class="grid3">
+    <div class="stat"><strong id="studyHours">0h</strong><small>planned study this week</small></div>
+    <div class="stat"><strong id="lifeHours">0h</strong><small>protected life / recovery</small></div>
+    <div class="stat"><strong id="classHours">0h</strong><small>fixed class time</small></div>
+  </div>
+  <div class="panel" style="margin-top:20px">
+    <div class="notice"><b>How the planner works:</b> fixed classes come first, then study is placed in the strongest open windows. It avoids your protected evening cutoff and keeps breaks between focused blocks.</div>
+    <div class="actions"><button class="primary" onclick="generate()">✨ Generate / Rebuild My Perfect Week</button><button class="secondary" onclick="demo()">Load Example Semester</button><button class="secondary" onclick="resetAll()">Reset</button></div>
+  </div>
+  <div class="panel">
+    <h2>This Week</h2>
+    <div class="schedule"><div class="week" id="scheduleGrid"></div></div>
+  </div>
+</section>
+
+<section id="classes" class="page hidden">
+  <div class="panel">
+    <h2>Add a class</h2>
+    <p class="muted">Use 24-hour time. Each class is treated as a fixed commitment.</p>
+    <div class="formgrid">
+      <div class="field"><label>COURSE</label><input id="course" placeholder="COMM 219"></div>
+      <div class="field"><label>DAY</label><select id="day"><option>Monday</option><option>Tuesday</option><option>Wednesday</option><option>Thursday</option><option>Friday</option></select></div>
+      <div class="field"><label>START</label><input id="start" type="time" value="09:00"></div>
+      <div class="field"><label>END</label><input id="end" type="time" value="10:15"></div>
+    </div>
+    <div class="actions"><button class="primary" onclick="addClass()">Add Class</button></div>
+    <div class="classlist" id="classList"></div>
+  </div>
+</section>
+
+<section id="balance" class="page hidden">
+  <div class="grid">
+    <div class="panel">
+      <h2>Life & recovery</h2>
+      <p class="muted">Protected time the algorithm will not fill with studying.</p>
+      <div class="checklist" id="lifeChecks">
+        <label class="check"><input type="checkbox" data-life="Exercise" checked> Exercise / movement</label>
+        <label class="check"><input type="checkbox" data-life="Meals" checked> Proper meals</label>
+        <label class="check"><input type="checkbox" data-life="Social" checked> Friends / social time</label>
+        <label class="check"><input type="checkbox" data-life="Personal" checked> Personal / hobby time</label>
+      </div>
+      <div class="actions"><button class="secondary" onclick="generate()">Apply to schedule</button></div>
+    </div>
+    <div class="panel">
+      <h2>Work</h2>
+      <p class="muted">Add recurring work shifts. StudyFlow will never schedule studying over them.</p>
+      <div class="formgrid">
+        <div class="field"><label>DAY</label><select id="workDay"><option>Monday</option><option>Tuesday</option><option>Wednesday</option><option>Thursday</option><option>Friday</option><option>Saturday</option><option>Sunday</option></select></div>
+        <div class="field"><label>START</label><input id="workStart" type="time" value="17:00"></div>
+        <div class="field"><label>END</label><input id="workEnd" type="time" value="20:00"></div>
+        <div class="field"><label>LABEL</label><input id="workLabel" value="Work"></div>
+      </div>
+      <div class="actions"><button class="primary" onclick="addWork()">Add Shift</button></div>
+      <div class="classlist" id="workList"></div>
+    </div>
+  </div>
+  <div class="panel">
+    <h2>Weekly balance targets</h2>
+    <div class="goal"><span>Study target</span><b id="targetStudy">12h</b></div>
+    <div class="goal"><span>Exercise target</span><b>3–5 sessions</b></div>
+    <div class="goal"><span>Protected evening</span><b id="targetCutoff">4:00 PM</b></div>
+  </div>
+</section>
+
+<section id="settings" class="page hidden">
+  <div class="panel">
+    <h2>Planner preferences</h2>
+    <div class="formgrid">
+      <div class="field"><label>WEEKLY STUDY HOURS</label><input id="studyTarget" type="number" min="1" max="50" value="12"></div>
+      <div class="field"><label>DAILY HARD STOP</label><input id="cutoff" type="time" value="16:00"></div>
+      <div class="field"><label>FOCUS BLOCK (MIN)</label><input id="blockMins" type="number" min="30" max="180" value="75"></div>
+      <div class="field"><label>BREAK (MIN)</label><input id="breakMins" type="number" min="5" max="45" value="15"></div>
+    </div>
+    <div class="actions"><button class="primary" onclick="savePrefs();generate()">Save & Regenerate</button></div>
+  </div>
+  <div class="panel">
+    <h2>Planning philosophy</h2>
+    <ul class="muted">
+      <li>Fixed classes and work always win.</li>
+      <li>Study is distributed instead of crammed into one giant day.</li>
+      <li>Earlier open windows get priority for difficult work.</li>
+      <li>After the daily hard stop, the planner protects your evening.</li>
+      <li>Saturday/Sunday can be used for overflow, but life blocks are kept first.</li>
+    </ul>
+  </div>
+</section>
+</main>
+
+<script>
+const DAYS=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+const TIMES=["08:00","09:00","10:00","11:00","12:00","13:00","14:00","15:00","16:00","17:00","18:00","19:00","20:00","21:00"];
+let state=JSON.parse(localStorage.getItem("studyflow")||"null")||{
+ classes:[], work:[], prefs:{target:12,cutoff:"16:00",block:75,brk:15}, generated:[]
+};
+function mins(t){let [h,m]=t.split(":").map(Number);return h*60+m}
+function hm(n){let h=Math.floor(n/60),m=n%60;return String(h).padStart(2,"0")+":"+String(m).padStart(2,"0")}
+function save(){localStorage.setItem("studyflow",JSON.stringify(state));document.getElementById("saveStatus").textContent="Saved locally • "+new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}
+function savePrefs(){state.prefs={target:+document.getElementById("studyTarget").value,cutoff:document.getElementById("cutoff").value,block:+document.getElementById("blockMins").value,brk:+document.getElementById("breakMins").value};save();render()}
+function addClass(){
+ let course=document.getElementById("course").value.trim(); if(!course)return alert("Enter a course.");
+ state.classes.push({id:Date.now(),course,day:day.value,start:start.value,end:end.value}); save(); render(); document.getElementById("course").value="";
+}
+function delClass(id){state.classes=state.classes.filter(x=>x.id!==id);save();render()}
+function addWork(){
+ state.work.push({id:Date.now(),day:workDay.value,start:workStart.value,end:workEnd.value,label:workLabel.value||"Work"});save();render();generate()
+}
+function delWork(id){state.work=state.work.filter(x=>x.id!==id);save();render();generate()}
+function overlaps(a,b){return a.day===b.day && mins(a.start)<mins(b.end) && mins(a.end)>mins(b.start)}
+function generate(){
+ const p=state.prefs, events=[...state.classes.map(x=>({...x,type:"class",label:x.course})),...state.work.map(x=>({...x,type:"work",label:x.label}))];
+ let generated=[], target=p.target*60;
+ // reserve lunch, exercise/social/personal after the hard stop; these are life blocks rather than study opportunities.
+ DAYS.forEach(day=>{
+   if(day==="Saturday"||day==="Sunday") return;
+   generated.push({day,start:"12:30",end:"13:15",type:"life",label:"Lunch / reset"});
+   generated.push({day,start:p.cutoff,end:"18:00",type:"life",label:"Protected evening"});
+ });
+ // Find open weekday windows before hard stop, then weekend daytime windows.
+ let candidates=[];
+ DAYS.forEach(day=>{
+   let limit=mins(p.cutoff);
+   let ranges=[[8*60,limit]];
+   if(day==="Saturday"||day==="Sunday") ranges=[[9*60,17*60]];
+   ranges.forEach(r=>{
+     let cursor=r[0];
+     let fixed=events.filter(e=>e.day===day).map(e=>({s:mins(e.start),e:mins(e.end)}))
+       .concat(generated.filter(e=>e.day===day&&e.type==="life").map(e=>({s:mins(e.start),e:mins(e.end)})));
+     fixed.sort((a,b)=>a.s-b.s);
+     fixed.forEach(f=>{if(f.s-cursor>=p.block) candidates.push({day,s:cursor,e:f.s}); cursor=Math.max(cursor,f.e)});
+     if(r[1]-cursor>=p.block)candidates.push({day,s:cursor,e:r[1]});
+   });
+ });
+ // prioritize weekdays, then spread across days; choose chunks.
+ candidates.sort((a,b)=>DAYS.indexOf(a.day)-DAYS.indexOf(b.day)||a.s-b.s);
+ let perDay={}; candidates.forEach(c=>perDay[c.day]=perDay[c.day]||0);
+ let remaining=target;
+ while(remaining>=45){
+   let best=candidates.find(c=>c.e-c.s>=Math.min(p.block,remaining) && (perDay[c.day]||0)<180);
+   if(!best) best=candidates.find(c=>c.e-c.s>=45);
+   if(!best) break;
+   let dur=Math.min(p.block,remaining,best.e-best.s);
+   generated.push({day:best.day,start:hm(best.s),end:hm(best.s+dur),type:"study",label:"Focused study"});
+   perDay[best.day]=(perDay[best.day]||0)+dur; remaining-=dur;
+   best.s+=dur+p.brk;
+   if(best.e-best.s<45)candidates=candidates.filter(c=>c!==best);
+ }
+ state.generated=generated; save(); render();
+}
+function render(){
+ document.getElementById("studyTarget").value=state.prefs.target;
+ document.getElementById("cutoff").value=state.prefs.cutoff;
+ document.getElementById("blockMins").value=state.prefs.block;
+ document.getElementById("breakMins").value=state.prefs.brk;
+ document.getElementById("targetStudy").textContent=state.prefs.target+"h";
+ document.getElementById("targetCutoff").textContent=new Date("2000-01-01T"+state.prefs.cutoff).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"});
+ document.getElementById("classList").innerHTML=state.classes.length?state.classes.map(x=>`<div class="classrow"><b>${x.course}</b><span>${x.day}</span><span>${x.start}</span><span>${x.end}</span><button class="danger" onclick="delClass(${x.id})">Delete</button></div>`).join(""):"<p class='muted'>No classes yet.</p>";
+ document.getElementById("workList").innerHTML=state.work.length?state.work.map(x=>`<div class="classrow"><b>${x.label}</b><span>${x.day}</span><span>${x.start}</span><span>${x.end}</span><button class="danger" onclick="delWork(${x.id})">Delete</button></div>`).join(""):"<p class='muted'>No work shifts yet.</p>";
+ let classMin=state.classes.reduce((a,x)=>a+mins(x.end)-mins(x.start),0);
+ let studyMin=state.generated.filter(x=>x.type==="study").reduce((a,x)=>a+mins(x.end)-mins(x.start),0);
+ let lifeMin=state.generated.filter(x=>x.type==="life").reduce((a,x)=>a+mins(x.end)-mins(x.start),0);
+ studyHours.textContent=Math.round(studyMin/60*10)/10+"h"; lifeHours.textContent=Math.round(lifeMin/60*10)/10+"h"; classHours.textContent=Math.round(classMin/60*10)/10+"h";
+ buildGrid();
+}
+function buildGrid(){
+ let grid=document.getElementById("scheduleGrid"), times=[];
+ for(let h=8;h<=20;h++)times.push(h*60);
+ let all=[...state.classes.map(x=>({...x,type:"class",label:x.course})),...state.work.map(x=>({...x,type:"work",label:x.label})),...state.generated];
+ let out=`<div class="cell head">TIME</div>`+DAYS.slice(0,5).map(d=>`<div class="cell head">${d.slice(0,3).toUpperCase()}</div>`).join("");
+ times.forEach(t=>{
+   out+=`<div class="cell time">${hm(t)}</div>`;
+   DAYS.slice(0,5).forEach(day=>{
+     let ev=all.find(e=>e.day===day && mins(e.start)<=t && mins(e.end)>t);
+     out+=`<div class="cell">${ev?`<div class="block ${ev.type}block">${ev.label}<br><small>${ev.start}–${ev.end}</small></div>`:"<span class='empty'>Open</span>"}</div>`;
+   });
+ });
+ grid.innerHTML=out;
+}
+function demo(){
+ state.classes=[
+  {id:1,course:"COMM 227",day:"Monday",start:"09:00",end:"10:15"},
+  {id:2,course:"COMM 227",day:"Tuesday",start:"09:00",end:"10:15"},
+  {id:3,course:"COMM 217",day:"Wednesday",start:"09:00",end:"10:15"},
+  {id:4,course:"COMM 217",day:"Thursday",start:"09:00",end:"10:15"},
+  {id:5,course:"COMM 217",day:"Friday",start:"09:00",end:"10:15"},
+  {id:6,course:"COMM 219",day:"Monday",start:"11:15",end:"12:30"},
+  {id:7,course:"COMM 219",day:"Tuesday",start:"11:15",end:"12:30"},
+  {id:8,course:"COMM 226",day:"Wednesday",start:"13:15",end:"14:30"},
+  {id:9,course:"COMM 216",day:"Thursday",start:"13:15",end:"14:30"}
+ ]; state.work=[];save();render();generate();
+}
+function resetAll(){if(confirm("Clear your semester?")){localStorage.removeItem("studyflow");location.reload()}}
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));b.classList.add("active");document.querySelectorAll(".page").forEach(x=>x.classList.add("hidden"));document.getElementById(b.dataset.tab).classList.remove("hidden")});
+render();
+if(!state.generated.length && state.classes.length)generate();
+</script>
+</body>
+</html>
